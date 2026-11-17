@@ -6,7 +6,7 @@ public enum RoomType {
     SEMINAR_ROOM("seminarRoom"),
     MEETING_ROOM("meetingRoom");
 
-    // this tokenType is used in command line
+    // this tokenType is used to be displayed in command line
     private final String tokenType;
 
     RoomType (String type){

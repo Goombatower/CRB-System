@@ -1,30 +1,24 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
 
 public enum UserType {
-    USER("user"),
-    ADMIN("admin"),
-    SUPER_ADMIN("superAdmin");
+    /** A regular user: books rooms and views schedules. */
+    REGULAR,
+    /** An admin user: additionally manages rooms and regular users. */
+    ADMIN,
+    /** The unique superadmin: the only UserType allowed to change UserType. */
+    SUPERADMIN;
 
-    // this tokenType is used in command line
-    private final String tokenType;
-    
-    UserType (String type){
-        this.tokenType = type;
-    }
-
-    public String getTokenType() {
-        return this.tokenType;
-    }
-    public static userType fromToken (String token) {
+    public static UserType fromToken(String token) {
         if (token == null) {
-            // throw new CrobsException.InvalidValueException("missing user type") ?
+            // throw new CrobsException.InvalidValueException("role is missing");
         }
-        for (UserType type : values()) {
-            if (type.tokenType.equals(token)) {
-                return type;
-            }
-        }
-        // throw new CrobsException.InvalidValueException("unknown user type: " + token) ?
-        return null;
+        return switch (token.toLowerCase()) {
+            case "user" -> REGULAR;
+            case "admin" -> ADMIN;
+            case "superadmin" -> SUPERADMIN;
+            default ->
+                // throw new CrobsException.InvalidValueException("unknown role: " + token);
+                    null;
+        };
     }
 }

@@ -6,39 +6,57 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * A room. Every room has a unique roomId, a {@link RoomType}, a capacity and a features.
+ *
+ * The roomId is immutable.
+ * The RoomType, capacity and features may change through admin's {@code modifyRoom} command.
+ */
 public final class Room {
-    // final id
     private final int roomId;
     private RoomType roomType;
     private int capacity;
-    // never change its reference
+    // never change its reference, only update data inside
     private final Set<String> features = new LinkedHashSet<>();
 
     public Room(int roomId, RoomType roomType, int capacity, Collection<String> features) {
+        // idGenerator should not be used here, it should be used by class who is creating instance
         this.roomId = roomId;
-        this.roomType = roomType;
-        this.capacity = capacity;
-        this.features.addAll(features);
+        setType(roomType);
+        setCapacity(capacity);
+        setFeatures(features);
     }
 
-    public int getId() {
+    // standard getters
+    public int getRoomIdId() {
         return roomId;
     }
-
-    public RoomType getType() {
+    public RoomType getRoomType() {
         return roomType;
     }
-
     public int getCapacity() {
         return capacity;
     }
-
     public Set<String> getFeatures() {
         // only return view, make it unmodifiable
         return Collections.unmodifiableSet(features);
     }
 
-    // may be used by id generator ?
+    // setters for constructor and command modifying, with input validation
+    public void setType(RoomType type) {
+        this.roomType = Objects.requireNonNull(type, "type must not be null");
+    }
+    public void setCapacity(int capacity) {
+        if (capacity <= 0) {
+            // throw new CrobsException.InvalidValueException("capacity must be positive: " + capacity);
+        }
+        this.capacity = capacity;
+    }
+    public void setFeatures(Collection<String> features) {
+        this.features.clear();
+        this.features.addAll(features);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -49,12 +67,10 @@ public final class Room {
         }
         return roomId == ((Room) o).roomId;
     }
-
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash(roomId);
-//    }
-
+    @Override
+    public int hashCode() {
+        return Objects.hash(roomId);
+    }
     @Override
     public String toString() {
         return "Room{id=" + roomId + ", type=" + roomType.getTokenType()
