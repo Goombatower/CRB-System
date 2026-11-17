@@ -5,7 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class HtmlOperationLogger extends OperationLogger {
+public final class HtmlOperationLogger extends OperationLogger {
     private final BufferedWriter writer;
 
     public HtmlOperationLogger(Path path) throws IOException{
