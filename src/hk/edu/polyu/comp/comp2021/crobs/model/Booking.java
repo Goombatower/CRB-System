@@ -3,7 +3,7 @@ import java.time;
 
 
 public final class Booking {
-  final int BookingID;
+  final int BookingId;
   final User user;
   private Room room;
   private LocalDateTime bookTime;
@@ -12,7 +12,7 @@ public final class Booking {
     this.user=us;
     this.Room=r;
     this.bookTime=bt;
-    this.BookingID=IdGenerator.nextBookingID;
+    this.BookingId=IdGenerator.nextBookingID;
   }
 
   public User getUser(){
@@ -24,4 +24,14 @@ public final class Booking {
   public LocalDateTime getBookingTime(){
     return this.bookTime;
   }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+        return true;
+    }
+    if (!(o instanceof Booking)) {
+        return false;
+    }
+    return this.bookingId == ((Booking) o).bookingId;
 }
