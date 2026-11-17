@@ -1,4 +1,5 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
 
-public class User {
+public final class User {
+
 }
