@@ -62,11 +62,7 @@ public final class Storage {
         }
         users.remove(userId);
         // remove bookings made by user
-        for (Booking booking : bookings.values()) {
-            if (booking.getUserId() == userId) {
-                bookings.remove(booking.getBookId());
-            }
-        }
+        bookings.values().removeIf(booking -> booking.getUserId() == userId);
     }
 
     public void changeUserType(int userId, UserType newRole) {
@@ -110,11 +106,7 @@ public final class Storage {
             throw new CrobsException.NoSuchRoomException("no such room: " + roomId);
         }
         // remove bookings associated with this room
-        for (Booking booking : bookings.values()) {
-            if (booking.getRoomId() == roomId) {
-                bookings.remove(booking.getBookId());
-            }
-        }
+        bookings.values().removeIf(booking -> booking.getRoomId() == roomId);
     }
 
     public void changeRoomFeature(int roomId, Set<String> features) {
@@ -196,7 +188,7 @@ public final class Storage {
             if (booking.getRoomId() == roomId) {
                 LocalDate date = booking.getDate();
                 // Check if date is within [weekStart, weekStart + 6 days]
-                if (date != null && !date.isBefore(weekStart) && date.isBefore(weekEnd)) {
+                if (!date.isBefore(weekStart) && date.isBefore(weekEnd)) {
                     list.add(booking);
                 }
             }

@@ -65,7 +65,7 @@ public final class Room {
         if (!(o instanceof Room)) {
             return false;
         }
-        return roomId == ((Room) o).getroomId();
+        return roomId == ((Room) o).getRoomId();
     }
 
     @Override
