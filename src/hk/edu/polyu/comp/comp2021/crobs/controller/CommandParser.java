@@ -6,6 +6,8 @@ import java.util.List;
 /** Turns a raw command line into a {@link Command}. */
 public final class CommandParser {
 
+    /// @param line the line needing to be parsed
+    /// @return the input string as a Command class object
     public Command parse(String line) {
         if (line == null) {
             return null;

@@ -13,6 +13,11 @@ public final class User {
     private final String name;
     private UserType userType;
 
+    /// Creates a user with the given details.
+    ///
+    /// @param userId the unique ID of the user
+    /// @param name the name of the user, must not be null
+    /// @param userType the type of the user, must not be null
     public User(int userId, String name, UserType userType) {
         this.userId = userId;
         this.name = Objects.requireNonNull(name, "name must not be null");
@@ -20,26 +25,43 @@ public final class User {
     }
 
     // standard getters
+    /// Gets the user ID
+    /// @return the unique ID of this user
     public int getUserId() {
         return userId;
     }
+
+    /// Gets the user's name.
+    /// @return the name of this user
     public String getName() {
         return name;
     }
+
+    /// Gets the user's type.
+    /// @return the current type of this user
     public UserType getUserType() {
         return userType;
     }
 
     // setters for constructor and command modifying, with input validation
+    /// Sets the user's type.
+    /// @param userType the new type of this user, must not be null
     public void setUserType(UserType userType) {
         this.userType = Objects.requireNonNull(userType, "role must not be null");
     }
 
-    /** @return true if this user has admin (or superadmin) privileges. */
+    /**
+     * Checks whether this user has admin privileges.
+     * @return true if this user has admin (or superadmin) privileges.
+     */
     public boolean isAdmin() {
         return userType == UserType.ADMIN || userType == UserType.SUPERADMIN;
     }
-    /** @return true if this user is the superadmin. */
+
+    /**
+     * Checks whether this user is the superadmin.
+     * @return true if this user is the superadmin.
+     */
     public boolean isSuperAdmin() {
         return userType == UserType.SUPERADMIN;
     }

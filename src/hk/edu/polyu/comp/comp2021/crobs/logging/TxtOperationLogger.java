@@ -5,9 +5,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public final class TxtOperationLogger extends OperationLogger{
+/// logs the operations in txt
+public final class TxtOperationLogger implements OperationLogger {
     private final BufferedWriter writer;
 
+    /// @param path the path that needs to be logged
+    /// @throws IOException throws exception to appease JAVA
     public TxtOperationLogger(Path path) throws IOException {
         this.writer =  new BufferedWriter(new FileWriter(path.toString()));
     }

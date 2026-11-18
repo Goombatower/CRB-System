@@ -53,20 +53,25 @@ public final class Controller {
     private int operationIndex = 0; // record for loggers
     private boolean quitRequested = false;
 
+    /// @param store the storage of users, bookings, and others
+    /// @param loggers the log of any given session
     public Controller(Storage store, List<OperationLogger> loggers) {
         this.store = store;
         this.loggers = new ArrayList<>(loggers);
     }
 
     // getters
+    /// @return the storage
     public Storage getStore() {
         return store;
     }
 
+    /// @return the session
     public Session getSession() {
         return session;
     }
 
+    /// @return the request to quit a session
     public boolean isQuitRequested() {
         return quitRequested;
     }
@@ -76,6 +81,8 @@ public final class Controller {
      * Executes one command: logs it, dispatches it, and returns a message
      * describing the outcome. Errors are turned into messages rather than thrown
      * so the main loop keeps running.
+     * @param command the command to be executed
+     * @return a dispatch if the command is succesful, and an error if it's not
      */
     public String execute(Command command) {
         log(command);
