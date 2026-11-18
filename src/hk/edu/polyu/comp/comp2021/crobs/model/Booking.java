@@ -80,11 +80,11 @@ public final class Booking {
         if (other == null) {
             return false;
         }
-        if (roomId != other.roomId || !date.equals(other.date)) {
+        if (roomId != other.getRoomId() || !date.equals(other.getDate())) {
             return false;
         }
         // not(non-conflict case1 || case2)，adjacent intervals do not conflict
-        return startTime.isBefore(other.endTime) && other.startTime.isBefore(endTime);
+        return startTime.isBefore(other.getEndTime()) && other.getStartTime().isBefore(endTime);
     }
 
     @Override
