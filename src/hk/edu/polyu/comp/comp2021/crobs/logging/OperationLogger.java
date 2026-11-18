@@ -5,7 +5,7 @@ import java.io.IOException;
 /**
  *  Records the operations performed during a Crobs session
  */
-public abstract class OperationLogger implements Closeable{
+public interface OperationLogger extends Closeable {
 
     /**
      * Records one operation.
@@ -13,13 +13,13 @@ public abstract class OperationLogger implements Closeable{
      * @param operationIndex the 1-based index of the operation, shared by all loggers
      * @param command        the command text as typed
      */
-    public abstract void log(int operationIndex, String command);
+    void log(int operationIndex, String command);
 
     /**
      * Flushes and closes the underlying writer.
      * @throws IOException thrown by writer
      */
     @Override
-    public abstract void close() throws IOException;
+    void close() throws IOException;
 }
 

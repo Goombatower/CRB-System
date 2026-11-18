@@ -29,6 +29,9 @@ public final class Storage {
     // Users
     // ------------------------------------------------------------------
 
+    /// Creates a new regular user with a newly generated ID.
+    /// @param name the name of the new user
+    /// @return the newly created user
     public User addUser(String name) {
         int userId = IdGenerator.nextUserId();
         User user = new User(userId, name, UserType.REGULAR);
@@ -36,6 +39,9 @@ public final class Storage {
         return user;
     }
 
+    /// Looks up a user by ID.
+    /// @param userId the ID of the user to find
+    /// @return the user with the given ID
     public User getUser(int userId) {
         User user = users.get(userId);
         if (user == null) {
@@ -44,6 +50,8 @@ public final class Storage {
         return user;
     }
 
+    /// Gets all users.
+    /// @return a list of all users, sorted by user ID in ascending order
     public List<User> getUsers() {
         List<User> list = new ArrayList<>(users.values());
         // sort by id, ascending order
@@ -51,6 +59,8 @@ public final class Storage {
         return list;
     }
 
+    /// Removes a regular user together with all bookings made by that user.
+    /// @param userId the ID of the user to remove
     public void removeUser(int userId) {
         User user = users.get(userId);
         if (user == null) {
@@ -65,6 +75,10 @@ public final class Storage {
         bookings.values().removeIf(booking -> booking.getUserId() == userId);
     }
 
+    /// Changes the type of a user.
+    ///
+    /// @param userId the ID of the user to change
+    /// @param newRole the new type to assign to the user
     public void changeUserType(int userId, UserType newRole) {
         User user = users.get(userId);
         if (user == null) {
@@ -78,6 +92,12 @@ public final class Storage {
     // Rooms
     // ------------------------------------------------------------------
 
+    /// Creates a new room with a newly generated ID.
+    ///
+    /// @param type the type of the new room
+    /// @param capacity the capacity of the new room
+    /// @param features the features of the new room
+    /// @return the newly created room
     public Room addRoom(RoomType type, int capacity, Set<String> features) {
         int roomId = IdGenerator.nextRoomId();
         Room room = new Room(roomId, type, capacity, features);
@@ -85,6 +105,10 @@ public final class Storage {
         return room;
     }
 
+    /// Looks up a room by ID.
+    ///
+    /// @param roomId the ID of the room to find
+    /// @return the room with the given ID
     public Room getRoom(int roomId) {
         Room room = rooms.get(roomId);
         if (room == null) {
@@ -93,6 +117,9 @@ public final class Storage {
         return room;
     }
 
+    /// Gets all rooms.
+    ///
+    /// @return a list of all rooms, sorted by room ID in ascending order
     public List<Room> getRooms() {
         List<Room> list = new ArrayList<>(rooms.values());
         // sort by id, ascending order
@@ -100,6 +127,9 @@ public final class Storage {
         return list;
     }
 
+    /// Removes a room together with all bookings of that room.
+    ///
+    /// @param roomId the ID of the room to remove
     public void removeRoom(int roomId) {
         Room room = rooms.remove(roomId);
         if (room == null) {
@@ -109,6 +139,10 @@ public final class Storage {
         bookings.values().removeIf(booking -> booking.getRoomId() == roomId);
     }
 
+    /// Replaces the features of a room.
+    ///
+    /// @param roomId the ID of the room to change
+    /// @param features the new set of features
     public void changeRoomFeature(int roomId, Set<String> features) {
         Room room = rooms.get(roomId);
         if (room == null) {
@@ -118,6 +152,10 @@ public final class Storage {
         rooms.replace(roomId, room);
     }
 
+    /// Changes the type of a room.
+    ///
+    /// @param roomId the ID of the room to change
+    /// @param type the new room type
     public void changeRoomType(int roomId, RoomType type) {
         Room room = rooms.get(roomId);
         if (room == null) {
@@ -127,6 +165,10 @@ public final class Storage {
         rooms.replace(roomId, room);
     }
 
+    /// Changes the capacity of a room.
+    ///
+    /// @param roomId the ID of the room to change
+    /// @param capacity the new capacity
     public void changeRoomCapacity(int roomId, int capacity) {
         Room room = rooms.get(roomId);
         if (room == null) {
@@ -138,14 +180,7 @@ public final class Storage {
 
     // Special searching methods related with Room
 
-    /** constraint checking helper
-     *
-     * @param roomId takes in the room ID
-     * @param date takes in the date
-     * @param start takes in the starting time
-     * @param end takes in the ending time
-     * @return returns if it is available or not
-     */
+    // constraint checking helper
     private boolean isAvailable(int roomId, LocalDate date, LocalTime start, LocalTime end) {
         for (Booking booking : bookings.values()) {
             if (booking.getRoomId() == roomId && booking.getDate().equals(date)
@@ -157,13 +192,16 @@ public final class Storage {
         return true;
     }
 
-    /** Search rooms available for a slot with the required capacity and features.
-     * @param date takes in the date
-     * @param start takes in the starting time
-     * @param end takes in the ending time
-     * @param minCapacity takes in the minimum capacity you need
-     * @param features takes in the features you want
-     * @return returns available rooms*/
+    /**
+     * Search rooms available for a slot with the required capacity and features.
+     *
+     * @param date the date of the slot
+     * @param start the start time of the slot (inclusive)
+     * @param end the end time of the slot (exclusive)
+     * @param minCapacity the minimum capacity a room must have
+     * @param features the features a room must all have
+     * @return a list of the rooms that are free during the slot and meet the requirements
+     */
     public List<Room> searchAvailableRooms(LocalDate date, LocalTime start, LocalTime end,
                                            int minCapacity, Set<String> features) {
         List<Room> list = new ArrayList<>();
@@ -176,10 +214,13 @@ public final class Storage {
         return list;
     }
 
-    /** Returns all bookings for a room in the 7-day window starting at {@code weekStart} 
-     * @param roomId takes in the ID of the room you're searchin
-     * @param weekStart takes the start of the first day of the 7-day period
-     * @return returns list of bookins in the week*/
+    /**
+     * Returns all bookings for a room in the 7-day window starting at {@code weekStart}.
+     *
+     * @param roomId the ID of the room
+     * @param weekStart the first day of the 7-day window
+     * @return the bookings of the room within the window, sorted by date and then start time
+     */
     public List<Booking> weeklySchedule(int roomId, LocalDate weekStart) {
         LocalDate weekEnd = weekStart.plusDays(7); // Exclusive end for a 7-day window
         List<Booking> list = new ArrayList<>();
@@ -202,6 +243,15 @@ public final class Storage {
     // Bookings
     // ------------------------------------------------------------------
 
+    /// Creates a new booking with a newly generated ID, if the room exists and is free.
+    ///
+    /// @param userId the ID of the user making the booking
+    /// @param roomId the ID of the room to book
+    /// @param date the date of the booking
+    /// @param start the start time of the booking (inclusive)
+    /// @param end the end time of the booking (exclusive)
+    /// @param purpose the purpose of the booking
+    /// @return the newly created booking
     public Booking addBooking(int userId, int roomId, LocalDate date,
                               LocalTime start, LocalTime end, String purpose) {
         if (rooms.get(roomId) == null) {
@@ -216,6 +266,10 @@ public final class Storage {
         return booking;
     }
 
+    /// Looks up a booking by ID.
+    ///
+    /// @param bookingId the ID of the booking to find
+    /// @return the booking with the given ID
     public Booking getBooking(int bookingId) {
         Booking booking = bookings.get(bookingId);
         if (booking == null) {
@@ -224,6 +278,10 @@ public final class Storage {
         return booking;
     }
 
+    /// Gets all bookings made by a user.
+    ///
+    /// @param userId the ID of the user
+    /// @return the user's bookings, sorted by date and then start time
     public List<Booking> getBookingsForUser(int userId) {
         List<Booking> list = new ArrayList<>();
         for (Booking booking : bookings.values()) {
@@ -236,6 +294,9 @@ public final class Storage {
         return list;
     }
 
+    /// Gets all bookings.
+    ///
+    /// @return a list of all bookings, sorted by date and then start time
     public List<Booking> getAllBookings() {
         List<Booking> list = new ArrayList<>(bookings.values());
         // sort by date and time
@@ -243,6 +304,9 @@ public final class Storage {
         return list;
     }
 
+    /// Removes a booking.
+    ///
+    /// @param bookingId the ID of the booking to remove
     public void removeBooking(int bookingId) {
         Booking booking = bookings.remove(bookingId);
         if (booking == null) {
@@ -250,6 +314,10 @@ public final class Storage {
         }
     }
 
+    /// Moves a booking to another room.
+    ///
+    /// @param bookingId the ID of the booking to change
+    /// @param roomId the ID of the new room
     public void changeBookingRoom(int bookingId, int roomId) {
         Booking booking = bookings.get(bookingId);
         if (booking == null) {
@@ -259,6 +327,12 @@ public final class Storage {
         bookings.replace(bookingId, booking);
     }
 
+    /// Changes the date and time interval of a booking.
+    ///
+    /// @param bookingId the ID of the booking to change
+    /// @param date the new date
+    /// @param start the new start time (inclusive)
+    /// @param end the new end time (exclusive)
     public void changeBookingTime(int bookingId, LocalDate date, LocalTime start, LocalTime end) {
         Booking booking = bookings.get(bookingId);
         if (booking == null) {
@@ -268,6 +342,9 @@ public final class Storage {
         bookings.replace(bookingId, booking);
     }
 
+    /// Changes the purpose of a booking.
+    /// @param bookingId the ID of the booking to change
+    /// @param purpose the new purpose
     public void changeBookingPurpose(int bookingId, String purpose) {
         Booking booking = bookings.get(bookingId);
         if (booking == null) {

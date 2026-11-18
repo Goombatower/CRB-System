@@ -5,9 +5,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public final class HtmlOperationLogger extends OperationLogger {
+/// logs the operations in html
+public final class HtmlOperationLogger implements OperationLogger {
     private final BufferedWriter writer;
 
+    /// @param path the path that needs to be logged
+    /// @throws IOException throws exception to appease JAVA
     public HtmlOperationLogger(Path path) throws IOException{
         this.writer =  new BufferedWriter(new FileWriter(path.toString()));
         // initialize HTML with a table
