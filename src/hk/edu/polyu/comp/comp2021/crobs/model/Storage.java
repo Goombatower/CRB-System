@@ -18,6 +18,7 @@ import java.util.Set;
  * <p>Notice: User's priority check and selecting change methods should be done in controller.</p>
  */
 public final class Storage {
+    // there could be multiple storages
     private final Map<Integer, User> users = new HashMap<>();
     private final Map<Integer, Room> rooms = new HashMap<>();
     private final Map<Integer, Booking> bookings = new HashMap<>();
@@ -49,10 +50,15 @@ public final class Storage {
     }
 
     public void removeUser(int userId) {
-        User user = users.remove(userId);
+        User user = users.get(userId);
         if (user == null) {
             throw new CrobsException.NoSuchUserException("no such user: " + userId);
         }
+        // only allow removing regular
+        if (user.isAdmin()) {
+            throw new CrobsException.NoSuchUserException("can only remove regular user");
+        }
+        users.remove(userId);
         // remove bookings made by user
         for (Booking booking : bookings.values()) {
             if (booking.getUserId() == userId) {
@@ -188,6 +194,9 @@ public final class Storage {
 
     public Booking addBooking(int userId, int roomId, LocalDate date,
                               LocalTime start, LocalTime end, String purpose) {
+        if (rooms.get(roomId) == null) {
+            throw new CrobsException.NoSuchRoomException("no such user: " + roomId);
+        }
         if (!isAvailable(roomId, date, start, end)) {
             throw new CrobsException.BookingConflictException("booking conflict");
         }

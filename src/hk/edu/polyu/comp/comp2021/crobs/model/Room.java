@@ -71,6 +71,7 @@ public final class Room {
     @Override
     public String toString() {
         return "Room{id=" + roomId + ", type=" + roomType.getTokenType()
-                + ", capacity=" + capacity + ", features=" + features + "}";
+                + ", capacity=" + capacity + ", features="
+                + String.join(",", features) + "}";
     }
 }
