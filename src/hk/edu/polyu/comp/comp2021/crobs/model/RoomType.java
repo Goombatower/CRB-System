@@ -19,14 +19,13 @@ public enum RoomType {
 
     public static RoomType fromToken (String token) {
         if (token == null) {
-            // throw new CrobsException.InvalidValueException("missing room type") ?
+            throw new CrobsException.InvalidValueException("missing room type");
         }
         for (RoomType type : values()) {
             if (type.tokenType.equals(token)) {
                 return type;
             }
         }
-        // throw new CrobsException.InvalidValueException("unknown room type: " + token) ?
-        return null;
+        throw new CrobsException.InvalidValueException("unknown room type: " + token);
     }
 }

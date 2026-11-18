@@ -10,15 +10,13 @@ public enum UserType {
 
     public static UserType fromToken(String token) {
         if (token == null) {
-            // throw new CrobsException.InvalidValueException("role is missing");
+            throw new CrobsException.InvalidValueException("user type is missing");
         }
         return switch (token.toLowerCase()) {
             case "user" -> REGULAR;
             case "admin" -> ADMIN;
             case "superadmin" -> SUPERADMIN;
-            default ->
-                // throw new CrobsException.InvalidValueException("unknown role: " + token);
-                    null;
+            default -> throw new CrobsException.InvalidValueException("unknown user type: " + token);
         };
     }
 }

@@ -10,22 +10,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The single source of truth for Crobs's in-memory data and business rules.
+ * The store owns all {@link User}s, {@link Room}s and {@link Booking}s. It is
+ * the only place where IDs are created and where some constraints are
+ * enforced (unique IDs, no overlapping bookings, cascading deletes).
  *
- * <p>The store owns all {@link User}s, {@link Room}s and {@link Booking}s. It is
- * the only place where IDs are created and where cross-entity invariants are
- * enforced (unique IDs, no overlapping bookings, cascading deletes).</p>
- *
- * <p>The store is UI-agnostic: it knows nothing about the command line or files.
- * Permission checks (who is allowed to perform an operation) live in the
- * controller; the store only guarantees the integrity of the data it holds.
- * Because there is no persistence, all data lives in memory and is discarded on
- * {@code quit}.</p>
- *
- * <p>Read-only lookups and listing are already implemented below so the
- * command-line shell can run end to end. The mutating operations and the search /
- * schedule operations are left as TODO stubs for the group to implement; each
- * stub lists the requirement it belongs to.</p>
+ * <P>Methods order: Add, Get, Remove, Change.</P>
+ * <p>Notice: User's priority check and selecting change methods should be done in controller.</p>
  */
 public final class Storage {
     private final Map<Integer, User> users = new HashMap<>();
@@ -36,9 +26,8 @@ public final class Storage {
     // Users
     // ------------------------------------------------------------------
 
-
     public User addUser(String name) {
-        int userId = IdGenerator.nextUserID();
+        int userId = IdGenerator.nextUserId();
         User user = new User(userId, name, UserType.REGULAR);
         users.put(userId, user);
         return user;
@@ -86,7 +75,7 @@ public final class Storage {
     // ------------------------------------------------------------------
 
     public Room addRoom(RoomType type, int capacity, Set<String> features) {
-        int roomId = IdGenerator.nextRoomID();
+        int roomId = IdGenerator.nextRoomId();
         Room room = new Room(roomId, type, capacity, features);
         rooms.put(roomId, room);
         return room;
@@ -105,6 +94,19 @@ public final class Storage {
         // sort by id, ascending order
         list.sort(Comparator.comparingInt(Room::getRoomId));
         return list;
+    }
+
+    public void removeRoom(int roomId) {
+        Room room = rooms.remove(roomId);
+        if (room == null) {
+            throw new CrobsException.NoSuchRoomException("no such room: " + roomId);
+        }
+        // remove bookings associated with this room
+        for (Booking booking : bookings.values()) {
+            if (booking.getRoomId() == roomId) {
+                bookings.remove(booking.getBookId());
+            }
+        }
     }
 
     public void changeRoomFeature(int roomId, Set<String> features) {
@@ -134,28 +136,66 @@ public final class Storage {
         rooms.replace(roomId, room);
     }
 
-    /**
-     * Deletes a room and cancels all its future bookings (REQ9).
-     *
-     * <p>TODO: implement. Look up the room, remove it, and remove every booking
-     * that references its ID.</p>
-     */
-    public void removeRoom(int roomId) {
-        Room room = rooms.remove(roomId);
-        if (room == null) {
-            throw new CrobsException.NoSuchRoomException("no such room: " + roomId);
-        }
-        // remove bookings associated with this room
+    // Special searching methods related with Room
+
+    // constraint checking helper
+    private boolean isAvailable(int roomId, LocalDate date, LocalTime start, LocalTime end) {
         for (Booking booking : bookings.values()) {
-            if (booking.getRoomId() == roomId) {
-                bookings.remove(booking.getBookId());
+            if (booking.getRoomId() == roomId && booking.getDate().equals(date)
+                    && start.isBefore(booking.getEndTime())
+                    && booking.getStartTime().isBefore(end)) {
+                return false;
             }
         }
+        return true;
+    }
+
+    /** Search rooms available for a slot with the required capacity and features. */
+    public List<Room> searchAvailableRooms(LocalDate date, LocalTime start, LocalTime end,
+                                           int minCapacity, Set<String> features) {
+        List<Room> list = new ArrayList<>();
+        for (Room room : rooms.values()) {
+            if (isAvailable(room.getRoomId(), date, start, end) && room.getFeatures().containsAll(features)
+                    && room.getCapacity() >= minCapacity) {
+                list.add(room);
+            }
+        }
+        return list;
+    }
+
+    /** Returns all bookings for a room in the 7-day window starting at {@code weekStart} */
+    public List<Booking> weeklySchedule(int roomId, LocalDate weekStart) {
+        LocalDate weekEnd = weekStart.plusDays(7); // Exclusive end for a 7-day window
+        List<Booking> list = new ArrayList<>();
+
+        for (Booking booking : bookings.values()) {
+            if (booking.getRoomId() == roomId) {
+                LocalDate date = booking.getDate();
+                // Check if date is within [weekStart, weekStart + 6 days]
+                if (date != null && !date.isBefore(weekStart) && date.isBefore(weekEnd)) {
+                    list.add(booking);
+                }
+            }
+        }
+        // sort by date and time
+        list.sort(Comparator.comparing(Booking::getDate).thenComparing(Booking::getStartTime));
+        return list;
     }
 
     // ------------------------------------------------------------------
     // Bookings
     // ------------------------------------------------------------------
+
+    public Booking addBooking(int userId, int roomId, LocalDate date,
+                              LocalTime start, LocalTime end, String purpose) {
+        if (!isAvailable(roomId, date, start, end)) {
+            throw new CrobsException.BookingConflictException("booking conflict");
+        }
+        int bookId = IdGenerator.nextBookId();
+        Booking booking = new Booking(bookId, userId, roomId, date, start, end, purpose);
+        bookings.put(bookId, booking);
+        return booking;
+    }
 
     public Booking getBooking(int bookingId) {
         Booking booking = bookings.get(bookingId);
@@ -184,36 +224,13 @@ public final class Storage {
         return list;
     }
 
-
-    // constraint checking helper
-    private boolean isAvailable(int roomId, LocalDate date, LocalTime start, LocalTime end) {
-        for (Booking booking : bookings.values()) {
-            if (booking.getRoomId() == roomId && booking.getDate().equals(date)
-                    && start.isBefore(booking.getEndTime())
-                    && booking.getStartTime().isBefore(end)) {
-                return false;
-            }
+    public void removeBooking(int bookingId) {
+        Booking booking = bookings.remove(bookingId);
+        if (booking == null) {
+            throw new CrobsException.NoSuchBookingException("no such booking: " + bookingId);
         }
-        return true;
     }
 
-    public Booking addBooking(int userId, int roomId, LocalDate date,
-                                 LocalTime start, LocalTime end, String purpose) {
-        if (!isAvailable(roomId, date, start, end)) {
-            throw new CrobsException.BookingConflictException("booking conflict");
-        }
-        int bookId = IdGenerator.nexdBookId();
-        Booking booking = new Booking(bookId, userId, roomId, date, start, end, purpose);
-        bookings.put(bookId, booking);
-        return booking;
-    }
-
-    /**
-     * Updates room, date, times and purpose of a booking (REQ11).
-     *
-     * <p>TODO: implement. The booking ID and owner stay fixed. Re-check for
-     * conflicts against all other bookings.</p>
-     */
     public void changeBookingRoom(int bookingId, int roomId) {
         Booking booking = bookings.get(bookingId);
         if (booking == null) {
@@ -222,6 +239,7 @@ public final class Storage {
         booking.setRoomId(roomId);
         bookings.replace(bookingId, booking);
     }
+
     public void changeBookingTime(int bookingId, LocalDate date, LocalTime start, LocalTime end) {
         Booking booking = bookings.get(bookingId);
         if (booking == null) {
@@ -230,6 +248,7 @@ public final class Storage {
         booking.setTime(date, start, end);
         bookings.replace(bookingId, booking);
     }
+
     public void changeBookingPurpose(int bookingId, String purpose) {
         Booking booking = bookings.get(bookingId);
         if (booking == null) {
@@ -237,54 +256,5 @@ public final class Storage {
         }
         booking.setPurpose(purpose);
         bookings.replace(bookingId, booking);
-    }
-
-    public void removeBooking(int bookingId) {
-        Booking booking = bookings.remove(bookingId);
-        if (booking == null) {
-            throw new CrobsException.NoSuchBookingException("no such booking: " + bookingId);
-        }
-    }
-
-    /**
-     *  Search rooms available for a slot with the required capacity and features.
-     */
-    public List<Room> searchAvailableRooms(LocalDate date, LocalTime start, LocalTime end,
-                                           int minCapacity, Set<String> features) {
-        List<Room> list = new ArrayList<>();
-        for (Room room : rooms.values()) {
-            if (isAvailable(room.getRoomId(), date, start, end) && room.getFeatures().containsAll(features)
-                    && room.getCapacity() >= minCapacity) {
-                list.add(room);
-            }
-        }
-        return list;
-    }
-
-    /**
-     * Returns all bookings for a room in the 7-day window starting at {@code weekStart}
-     * (REQ14), sorted by date then start time.
-     *
-     * <p>TODO: implement. The controller will handle hiding other users' IDs from
-     * regular users.</p>
-     */
-    public List<Booking> weeklySchedule(int roomId, LocalDate weekStart) {
-        LocalDate weekEnd = weekStart.plusDays(7); // Exclusive end for a 7-day window
-        List<Booking> list = new ArrayList<>();
-
-        for (Booking booking : bookings.values()) {
-            if (booking.getRoomId() == roomId) {
-                LocalDate date = booking.getDate();
-                // Check if date is within [weekStart, weekStart + 6 days]
-                if (date != null && !date.isBefore(weekStart) && date.isBefore(weekEnd)) {
-                    list.add(booking);
-                }
-            }
-        }
-
-        // sort by date and time
-        list.sort(Comparator.comparing(Booking::getDate).thenComparing(Booking::getStartTime));
-
-        return list;
     }
 }

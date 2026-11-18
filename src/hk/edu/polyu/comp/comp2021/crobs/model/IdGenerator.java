@@ -1,15 +1,18 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
-import java.util.Random;
 
 public class IdGenerator {
-    private IdGenerator(){};
-    private static final Random randomID = new Random();
+    private IdGenerator(){}
+    static int roomIdStart = 100;
+    static int userIdStart = 1000;
+    static int bookIdStart = 1;
 
-    // temporary function, should be modified, uniqueness not ensured
-    public static int nextRoomID() {
-        return randomID.nextInt(100, 1000);
+    public static int nextRoomId() {
+        return roomIdStart++;
     }
-    public static int nextUserID() {
-        return randomID.nextInt(100000, 1000000);
+    public static int nextUserId() {
+        return userIdStart++;
+    }
+    public static int nextBookId() {
+        return bookIdStart++;
     }
 }
