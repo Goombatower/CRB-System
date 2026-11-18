@@ -12,22 +12,30 @@ public final class Session {
 
     private User currentUser;
 
-    /// @return gets the user of the session
+    /**
+     * @return gets the user of the session
+     */
     public User getCurrentUser() {
         return currentUser;
     }
 
-    /// @param user changes the current user to the param user
+    /**
+     * @param user changes the current user to the param user
+     */
     public void setCurrentUser(User user) {
         this.currentUser = user;
     }
 
-    /// @return checks if someone is currently logged in
+    /**
+     * @return checks if someone is currently logged in
+     */
     public boolean isLoggedIn() {
         return currentUser != null;
     }
 
-    /// sets the current user to null
+    /**
+     * sets the current user to null
+     */
     public void logout() {
         this.currentUser = null;
     }

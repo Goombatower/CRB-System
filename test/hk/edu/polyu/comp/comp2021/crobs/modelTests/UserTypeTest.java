@@ -16,6 +16,8 @@ class UserTypeTest {
         assertAll(
                 () -> assertSame(UserType.REGULAR, UserType.fromToken("user")),
                 () -> assertSame(UserType.REGULAR, UserType.fromToken("USER")),
+                () -> assertSame(UserType.REGULAR, UserType.fromToken("regular")),
+                () -> assertSame(UserType.REGULAR, UserType.fromToken("Regular")),
                 () -> assertSame(UserType.ADMIN, UserType.fromToken("admin")),
                 () -> assertSame(UserType.ADMIN, UserType.fromToken("Admin")),
                 () -> assertSame(UserType.SUPERADMIN, UserType.fromToken("superadmin")),

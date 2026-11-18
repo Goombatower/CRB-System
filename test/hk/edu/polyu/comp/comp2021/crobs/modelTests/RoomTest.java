@@ -6,6 +6,7 @@ import hk.edu.polyu.comp.comp2021.crobs.model.RoomType;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,13 +14,14 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RoomTest {
 
     private static Set<String> features(String... features) {
-        return new LinkedHashSet<>(List.of(features));
+        return new LinkedHashSet<>(Arrays.asList(features));
     }
 
     private static Room room() {
@@ -111,7 +113,9 @@ class RoomTest {
                 () -> assertTrue(room.equals(sameId)),
                 () -> assertFalse(room.equals(differentId)),
                 () -> assertFalse(room.equals("not a room")),
-                () -> assertFalse(room.equals(null))
+                () -> assertFalse(room.equals(null)),
+                () -> assertEquals(room.hashCode(), sameId.hashCode()),
+                () -> assertNotEquals(room.hashCode(), differentId.hashCode())
         );
     }
 

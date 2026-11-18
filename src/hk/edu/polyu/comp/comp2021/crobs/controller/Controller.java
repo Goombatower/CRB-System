@@ -53,25 +53,33 @@ public final class Controller {
     private int operationIndex = 0; // record for loggers
     private boolean quitRequested = false;
 
-    /// @param store the storage of users, bookings, and others
-    /// @param loggers the log of any given session
+    /**
+     * @param store the storage of users, bookings, and others
+     * @param loggers the log of any given session
+     */
     public Controller(Storage store, List<OperationLogger> loggers) {
         this.store = store;
         this.loggers = new ArrayList<>(loggers);
     }
 
     // getters
-    /// @return the storage
+    /**
+     * @return the storage
+     */
     public Storage getStore() {
         return store;
     }
 
-    /// @return the session
+    /**
+     * @return the session
+     */
     public Session getSession() {
         return session;
     }
 
-    /// @return the request to quit a session
+    /**
+     * @return the request to quit a session
+     */
     public boolean isQuitRequested() {
         return quitRequested;
     }
@@ -101,26 +109,45 @@ public final class Controller {
     }
 
     private String dispatch(Command command) {
-        return switch (command.getName()) {
-            case "addUser" -> addUser(command);
-            case "removeUser" -> removeUser(command);
-            case "changeRole" -> changeRole(command);
-            case "login" -> login(command);
-            case "logout" -> logout(command);
-            case "addRoom" -> addRoom(command);
-            case "modifyRoom" -> modifyRoom(command);
-            case "deleteRoom" -> deleteRoom(command);
-            case "book" -> book(command);
-            case "modifyBooking" -> modifyBooking(command);
-            case "deleteBooking" -> deleteBooking(command);
-            case "search" -> search(command);
-            case "schedule" -> schedule(command);
-            case "listRoom" -> listRoom(command);
-            case "listAllRooms" -> listAllRooms(command);
-            case "listBookings" -> listBookings(command);
-            case "quit" -> quit(command);
-            default -> throw new CrobsException.InvalidCommandException("unknown command: " + command.getName());
-        };
+        switch (command.getName()) {
+            case "addUser":
+                return addUser(command);
+            case "removeUser":
+                return removeUser(command);
+            case "changeRole":
+                return changeRole(command);
+            case "login":
+                return login(command);
+            case "logout":
+                return logout(command);
+            case "addRoom":
+                return addRoom(command);
+            case "modifyRoom":
+                return modifyRoom(command);
+            case "deleteRoom":
+                return deleteRoom(command);
+            case "book":
+                return book(command);
+            case "modifyBooking":
+                return modifyBooking(command);
+            case "deleteBooking":
+                return deleteBooking(command);
+            case "search":
+                return search(command);
+            case "schedule":
+                return schedule(command);
+            case "listRoom":
+                return listRoom(command);
+            case "listAllRooms":
+                return listAllRooms(command);
+            case "listBookings":
+                return listBookings(command);
+            case "quit":
+                return quit(command);
+            default:
+                throw new CrobsException.InvalidCommandException(
+                        "unknown command: " + command.getName());
+        }
     }
 
     // permission and parsing helpers
@@ -146,6 +173,19 @@ public final class Controller {
             throw new CrobsException.PermissionDeniedException("superadmin privileges required");
         }
         return user;
+    }
+
+    /** Rejects the operation unless {@code user} owns {@code booking}.
+     *
+     * @param booking the booking being changed
+     * @param user the currently logged-in user
+     * @param action the operation name used in the error message
+     */
+    private void requireOwner(Booking booking, User user, String action) {
+        if (booking.getUserId() != user.getUserId()) {
+            throw new CrobsException.PermissionDeniedException(
+                    "you can only " + action + " your own bookings");
+        }
     }
 
     private String requireArg(Command command, int index, String usage) {
@@ -215,6 +255,11 @@ public final class Controller {
             throw new CrobsException.PermissionDeniedException(
                     "superadmin cannot change its own role");
         }
+        // There is only one superadmin, so the role cannot be granted to anyone else.
+        if (userType == UserType.SUPERADMIN) {
+            throw new CrobsException.PermissionDeniedException(
+                    "the superadmin role is unique and cannot be assigned");
+        }
         store.changeUserType(id, userType);
         return "Changed role of user " + id + " to " + userType;
     }
@@ -257,11 +302,18 @@ public final class Controller {
         int id = parseInt(requireArg(c, 0, "modifyRoom roomID field newValue"));
         String field = requireArg(c, 1, "modifyRoom roomID field newValue");
         String value = requireArg(c, 2, "modifyRoom roomID field newValue");
-        switch (field){
-            case "type" -> store.changeRoomType(id, RoomType.fromToken(value));
-            case "capacity" -> store.changeRoomCapacity(id, parseInt(value));
-            case "features" -> store.changeRoomFeature(id, parseFeatures(value));
-            default -> throw new CrobsException.InvalidValueException("invalid field: " + field);
+        switch (field) {
+            case "type":
+                store.changeRoomType(id, RoomType.fromToken(value));
+                break;
+            case "capacity":
+                store.changeRoomCapacity(id, parseInt(value));
+                break;
+            case "features":
+                store.changeRoomFeature(id, parseFeatures(value));
+                break;
+            default:
+                throw new CrobsException.InvalidValueException("invalid field: " + field);
         }
         return "Modified room " + id;
     }
@@ -286,7 +338,7 @@ public final class Controller {
         return "Created booking " + booking;
     }
 
-    /** REQ11: modifyBooking bookingID roomId date startTime endTime purpose — any logged-in user. */
+    /** REQ11: modifyBooking bookingID roomId date startTime endTime purpose — the booking's owner. */
     private String modifyBooking(Command c) {
         User user = requireLogin();
         int bookingId = parseInt(requireArg(c, 0,
@@ -301,16 +353,19 @@ public final class Controller {
                 "modifyBooking bookingID roomId date startTime endTime purpose"));
         String purpose = requireArg(c, 5,
                 "modifyBooking bookingID roomId date startTime endTime purpose");
-        store.changeBookingRoom(bookingId, roomId);
-        store.changeBookingTime(bookingId, date, start, end);
-        store.changeBookingPurpose(bookingId, purpose);
+        // a booking can only be modified by the user who owns it
+        requireOwner(store.getBooking(bookingId), user, "modify");
+        // validate and apply the whole change at once so a failure leaves the booking untouched
+        store.changeBooking(bookingId, roomId, date, start, end, purpose);
         return "Modified booking " + bookingId;
     }
 
-    /** REQ12: deleteBooking bookingID — any logged-in user. */
+    /** REQ12: deleteBooking bookingID — the owner of the booking. */
     private String deleteBooking(Command c) {
         User user = requireLogin();
         int id = parseInt(requireArg(c, 0, "deleteBooking bookingID"));
+        // a booking can only be deleted by the user who owns it
+        requireOwner(store.getBooking(id), user, "delete");
         store.removeBooking(id);
         return "Deleted booking " + id;
     }
@@ -376,7 +431,7 @@ public final class Controller {
         }
         StringBuilder sb = new StringBuilder();
         for (Room room : rooms) {
-            if (!sb.isEmpty()) {
+            if (sb.length() > 0) {
                 sb.append('\n');
             }
             sb.append(formatRoom(room));
@@ -390,7 +445,7 @@ public final class Controller {
         }
         StringBuilder sb = new StringBuilder();
         for (Booking b : bookings) {
-            if (!sb.isEmpty()) {
+            if (sb.length() > 0) {
                 sb.append('\n');
             }
             sb.append("Booking ").append(b.getBookId())

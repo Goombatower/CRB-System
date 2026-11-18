@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,7 +40,7 @@ class StorageTest {
     }
 
     private static Set<String> features(String... values) {
-        return new LinkedHashSet<>(List.of(values));
+        return new LinkedHashSet<>(Arrays.asList(values));
     }
 
     // ------------------------------------------------------------------
@@ -70,7 +71,7 @@ class StorageTest {
 
         List<User> users = storage.getUsers();
 
-        assertEquals(List.of(first, second, third), users);
+        assertEquals(Arrays.asList(first, second, third), users);
         for (int i = 1; i < users.size(); i++) {
             assertTrue(users.get(i - 1).getUserId() < users.get(i).getUserId());
         }
@@ -112,7 +113,7 @@ class StorageTest {
         User admin = storage.addUser("Admin");
         storage.changeUserType(admin.getUserId(), UserType.ADMIN);
 
-        assertThrows(CrobsException.NoSuchUserException.class,
+        assertThrows(CrobsException.PermissionDeniedException.class,
                 () -> storage.removeUser(admin.getUserId()));
     }
 
@@ -160,7 +161,7 @@ class StorageTest {
 
         List<Room> rooms = storage.getRooms();
 
-        assertEquals(List.of(first, second, third), rooms);
+        assertEquals(Arrays.asList(first, second, third), rooms);
         for (int i = 1; i < rooms.size(); i++) {
             assertTrue(rooms.get(i - 1).getRoomId() < rooms.get(i).getRoomId());
         }
@@ -172,14 +173,15 @@ class StorageTest {
     }
 
     @Test
-    void removeRoomDeletesRoomAndItsBookings() {
+    void removeRoomDeletesRoomAndItsFutureBookings() {
         User user = storage.addUser("Alice");
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
         Room removed = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
         Room kept = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
         Booking removedBooking = storage.addBooking(user.getUserId(), removed.getRoomId(),
-                MON, T9, T10, "removed");
+                tomorrow, T9, T10, "removed");
         Booking keptBooking = storage.addBooking(user.getUserId(), kept.getRoomId(),
-                MON, T9, T10, "kept");
+                tomorrow, T9, T10, "kept");
 
         storage.removeRoom(removed.getRoomId());
 
@@ -190,6 +192,18 @@ class StorageTest {
                         () -> storage.getBooking(removedBooking.getBookId())),
                 () -> assertEquals(keptBooking, storage.getBooking(keptBooking.getBookId()))
         );
+    }
+
+    @Test
+    void removeRoomKeepsPastBookings() {
+        User user = storage.addUser("Alice");
+        Room room = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Booking past = storage.addBooking(user.getUserId(), room.getRoomId(),
+                LocalDate.now().minusDays(1), T9, T10, "past");
+
+        storage.removeRoom(room.getRoomId());
+
+        assertEquals(past, storage.getBooking(past.getBookId()));
     }
 
     @Test
@@ -295,6 +309,16 @@ class StorageTest {
     }
 
     @Test
+    void searchAvailableRoomsReturnsRoomsSortedById() {
+        Room first = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Room second = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Room third = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+
+        assertEquals(Arrays.asList(first, second, third),
+                storage.searchAvailableRooms(MON, T9, T10, 1, features()));
+    }
+
+    @Test
     void weeklyScheduleReturnsEmptyListForEmptyStorage() {
         assertTrue(storage.weeklySchedule(1, MON).isEmpty());
     }
@@ -320,7 +344,7 @@ class StorageTest {
 
         List<Booking> schedule = storage.weeklySchedule(target.getRoomId(), MON);
 
-        assertEquals(List.of(early, late, lastDay), schedule);
+        assertEquals(Arrays.asList(early, late, lastDay), schedule);
         assertAll(
                 () -> assertFalse(schedule.contains(tooLate)),
                 () -> assertFalse(schedule.contains(tooEarly)),
@@ -397,7 +421,7 @@ class StorageTest {
 
         List<Booking> bookings = storage.getBookingsForUser(alice.getUserId());
 
-        assertEquals(List.of(aliceEarly, aliceLate, aliceLaterDate), bookings);
+        assertEquals(Arrays.asList(aliceEarly, aliceLate, aliceLaterDate), bookings);
         assertTrue(storage.getBookingsForUser(-1).isEmpty());
     }
 
@@ -415,7 +439,7 @@ class StorageTest {
         Booking nextDay = storage.addBooking(alice.getUserId(), secondRoom.getRoomId(),
                 MON.plusDays(1), T9, T10, "next day");
 
-        assertEquals(List.of(earlier, later, nextDay), storage.getAllBookings());
+        assertEquals(Arrays.asList(earlier, later, nextDay), storage.getAllBookings());
     }
 
     @Test
@@ -461,6 +485,33 @@ class StorageTest {
     }
 
     @Test
+    void changeBookingRoomThrowsWhenRoomDoesNotExist() {
+        User user = storage.addUser("Alice");
+        Room room = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Booking booking = storage.addBooking(user.getUserId(), room.getRoomId(),
+                MON, T9, T10, "sync");
+
+        assertThrows(CrobsException.NoSuchRoomException.class,
+                () -> storage.changeBookingRoom(booking.getBookId(), -1));
+        assertEquals(room.getRoomId(), storage.getBooking(booking.getBookId()).getRoomId());
+    }
+
+    @Test
+    void changeBookingRoomRejectsConflict() {
+        User user = storage.addUser("Alice");
+        Room first = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Room second = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Booking moved = storage.addBooking(user.getUserId(), first.getRoomId(),
+                MON, T9, T10, "moved");
+        storage.addBooking(user.getUserId(), second.getRoomId(),
+                MON, LocalTime.of(9, 30), LocalTime.of(10, 30), "blocker");
+
+        assertThrows(CrobsException.BookingConflictException.class,
+                () -> storage.changeBookingRoom(moved.getBookId(), second.getRoomId()));
+        assertEquals(first.getRoomId(), storage.getBooking(moved.getBookId()).getRoomId());
+    }
+
+    @Test
     void changeBookingTimeUpdatesTime() {
         User user = storage.addUser("Alice");
         Room room = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
@@ -491,6 +542,87 @@ class StorageTest {
     void changeBookingTimeThrowsWhenBookingDoesNotExist() {
         assertThrows(CrobsException.NoSuchBookingException.class,
                 () -> storage.changeBookingTime(-1, MON, T9, T10));
+    }
+
+    @Test
+    void changeBookingTimeRejectsConflictWithAnotherBooking() {
+        User user = storage.addUser("Alice");
+        Room room = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Booking first = storage.addBooking(user.getUserId(), room.getRoomId(),
+                MON, T9, T10, "first");
+        storage.addBooking(user.getUserId(), room.getRoomId(), MON, T10, T11, "second");
+
+        assertThrows(CrobsException.BookingConflictException.class,
+                () -> storage.changeBookingTime(first.getBookId(), MON,
+                        LocalTime.of(9, 30), LocalTime.of(10, 30)));
+        assertEquals(T10, storage.getBooking(first.getBookId()).getEndTime());
+    }
+
+    @Test
+    void changeBookingUpdatesEverythingAtOnce() {
+        User user = storage.addUser("Alice");
+        Room first = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Room second = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Booking booking = storage.addBooking(user.getUserId(), first.getRoomId(),
+                MON, T9, T10, "sync");
+
+        storage.changeBooking(booking.getBookId(), second.getRoomId(),
+                MON.plusDays(1), T11, T12, "exam");
+
+        assertAll(
+                () -> assertEquals(second.getRoomId(),
+                        storage.getBooking(booking.getBookId()).getRoomId()),
+                () -> assertEquals(MON.plusDays(1), storage.getBooking(booking.getBookId()).getDate()),
+                () -> assertEquals(T11, storage.getBooking(booking.getBookId()).getStartTime()),
+                () -> assertEquals(T12, storage.getBooking(booking.getBookId()).getEndTime()),
+                () -> assertEquals("exam", storage.getBooking(booking.getBookId()).getPurpose())
+        );
+    }
+
+    @Test
+    void changeBookingThrowsWhenBookingDoesNotExist() {
+        assertThrows(CrobsException.NoSuchBookingException.class,
+                () -> storage.changeBooking(-1, 1, MON, T9, T10, "exam"));
+    }
+
+    @Test
+    void changeBookingThrowsWhenRoomDoesNotExist() {
+        User user = storage.addUser("Alice");
+        Room room = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Booking booking = storage.addBooking(user.getUserId(), room.getRoomId(),
+                MON, T9, T10, "sync");
+
+        assertThrows(CrobsException.NoSuchRoomException.class,
+                () -> storage.changeBooking(booking.getBookId(), -1, MON, T9, T10, "exam"));
+        assertEquals(room.getRoomId(), storage.getBooking(booking.getBookId()).getRoomId());
+    }
+
+    @Test
+    void changeBookingRejectsInvalidInterval() {
+        User user = storage.addUser("Alice");
+        Room room = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Booking booking = storage.addBooking(user.getUserId(), room.getRoomId(),
+                MON, T9, T10, "sync");
+
+        assertThrows(CrobsException.InvalidValueException.class,
+                () -> storage.changeBooking(booking.getBookId(), room.getRoomId(),
+                        MON, T12, T11, "exam"));
+        assertEquals(T10, storage.getBooking(booking.getBookId()).getEndTime());
+    }
+
+    @Test
+    void changeBookingRejectsConflict() {
+        User user = storage.addUser("Alice");
+        Room room = storage.addRoom(RoomType.SEMINAR_ROOM, 10, features());
+        Booking first = storage.addBooking(user.getUserId(), room.getRoomId(),
+                MON, T9, T10, "first");
+        storage.addBooking(user.getUserId(), room.getRoomId(), MON, T10, T11, "second");
+
+        assertThrows(CrobsException.BookingConflictException.class,
+                () -> storage.changeBooking(first.getBookId(), room.getRoomId(),
+                        MON, LocalTime.of(9, 30), LocalTime.of(10, 30), "exam"));
+        assertEquals("first", storage.getBooking(first.getBookId()).getPurpose());
+        assertEquals(T9, storage.getBooking(first.getBookId()).getStartTime());
     }
 
     @Test

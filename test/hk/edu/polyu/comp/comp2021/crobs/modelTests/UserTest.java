@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -73,7 +74,9 @@ class UserTest {
                 () -> assertTrue(user.equals(sameId)),
                 () -> assertFalse(user.equals(differentId)),
                 () -> assertFalse(user.equals("not a user")),
-                () -> assertFalse(user.equals(null))
+                () -> assertFalse(user.equals(null)),
+                () -> assertEquals(user.hashCode(), sameId.hashCode()),
+                () -> assertNotEquals(user.hashCode(), differentId.hashCode())
         );
     }
 

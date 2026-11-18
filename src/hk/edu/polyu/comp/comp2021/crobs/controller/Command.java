@@ -9,19 +9,25 @@ public final class Command {
     private final String name;
     private final List<String> args;
 
-    /// @param name name of the user
-    /// @param args args
+    /**
+     * @param name name of the user
+     * @param args args
+     */
     public Command(String name, List<String> args) {
         this.name = name;
         this.args = Collections.unmodifiableList(args);
     }
 
-    /// @return the name of the user
+    /**
+     * @return the name of the user
+     */
     public String getName() {
         return name;
     }
 
-    /// @return the args
+    /**
+     * @return the args
+     */
     public List<String> getArgs() {
         return args;
     }
@@ -32,7 +38,9 @@ public final class Command {
         return index < args.size() ? args.get(index) : null;
     }
 
-    /// @return the number of args
+    /**
+     * @return the number of args
+     */
     public int argCount() {
         return args.size();
     }

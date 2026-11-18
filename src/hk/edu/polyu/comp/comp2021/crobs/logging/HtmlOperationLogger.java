@@ -5,27 +5,29 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 
-/// logs the operations in html
+/**
+ * logs the operations in html
+ */
 public final class HtmlOperationLogger implements OperationLogger {
     private final BufferedWriter writer;
 
-    /// @param path the path that needs to be logged
-    /// @throws IOException throws exception to appease JAVA
+    /**
+     * @param path the path that needs to be logged
+     * @throws IOException throws exception to appease JAVA
+     */
     public HtmlOperationLogger(Path path) throws IOException{
         this.writer =  new BufferedWriter(new FileWriter(path.toString()));
         // initialize HTML with a table
-        write("""
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Crobs Log</title>
-                </head>
-                <body>
-                    <h1>Crobs operations</h1>
-                    <table>
-                        <tr><th>#</th><th>Command</th></tr>
-                """);
+        write("<!DOCTYPE html>\n"
+                + "<html lang=\"en\">\n"
+                + "<head>\n"
+                + "    <meta charset=\"UTF-8\">\n"
+                + "    <title>Crobs Log</title>\n"
+                + "</head>\n"
+                + "<body>\n"
+                + "    <h1>Crobs operations</h1>\n"
+                + "    <table>\n"
+                + "        <tr><th>#</th><th>Command</th></tr>\n");
     }
 
     @Override

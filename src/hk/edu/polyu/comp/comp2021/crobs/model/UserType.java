@@ -1,6 +1,8 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
 
-/// The Usertypes. Decided against class implementation of users for easier Command implementation
+/**
+ * The Usertypes. Decided against class implementation of users for easier Command implementation
+ */
 public enum UserType {
     /** A regular user: books rooms and views schedules. */
     REGULAR,
@@ -18,11 +20,16 @@ public enum UserType {
         if (token == null) {
             throw new CrobsException.InvalidValueException("user type is missing");
         }
-        return switch (token.toLowerCase()) {
-            case "user" -> REGULAR;
-            case "admin" -> ADMIN;
-            case "superadmin" -> SUPERADMIN;
-            default -> throw new CrobsException.InvalidValueException("unknown user type: " + token);
-        };
+        switch (token.toLowerCase()) {
+            case "user":
+            case "regular":
+                return REGULAR;
+            case "admin":
+                return ADMIN;
+            case "superadmin":
+                return SUPERADMIN;
+            default:
+                throw new CrobsException.InvalidValueException("unknown user type: " + token);
+        }
     }
 }

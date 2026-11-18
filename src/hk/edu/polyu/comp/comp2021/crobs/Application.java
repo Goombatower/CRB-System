@@ -25,9 +25,11 @@ public final class Application {
         // utility class, empty by default
     }
 
-    /// @param args the args
-    /// @throws IOException throws the IOexception of appeasement
-    static void main(String[] args) throws IOException {
+    /**
+     * @param args the args
+     * @throws IOException throws the IOexception of appeasement
+     */
+    public static void main(String[] args) throws IOException {
         Path htmlPath = null;
         Path txtPath = null;
 

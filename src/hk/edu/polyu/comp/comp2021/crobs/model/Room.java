@@ -19,12 +19,14 @@ public final class Room {
     // never change its reference, only update data inside
     private final Set<String> features = new LinkedHashSet<>();
 
-    /// Creates a room with the given details.
-    ///
-    /// @param roomId the unique ID of the room
-    /// @param roomType the type of the room, must not be null
-    /// @param capacity the capacity of the room, must be positive
-    /// @param features the features of the room
+    /**
+     * Creates a room with the given details.
+     *
+     * @param roomId the unique ID of the room
+     * @param roomType the type of the room, must not be null
+     * @param capacity the capacity of the room, must be positive
+     * @param features the features of the room
+     */
     public Room(int roomId, RoomType roomType, int capacity, Collection<String> features) {
         // idGenerator should not be used here, it should be used by class who is creating instance
         this.roomId = roomId;
@@ -34,46 +36,58 @@ public final class Room {
     }
 
     // standard getters
-    /// Gets the room ID.
-    ///
-    /// @return the unique ID of this room
+    /**
+     * Gets the room ID.
+     *
+     * @return the unique ID of this room
+     */
     public int getRoomId() {
         return roomId;
     }
 
-    /// Gets the room type.
-    ///
-    /// @return the type of this room
+    /**
+     * Gets the room type.
+     *
+     * @return the type of this room
+     */
     public RoomType getRoomType() {
         return roomType;
     }
 
-    /// Gets the capacity.
-    ///
-    /// @return the capacity of this room
+    /**
+     * Gets the capacity.
+     *
+     * @return the capacity of this room
+     */
     public int getCapacity() {
         return capacity;
     }
 
-    /// Gets the features.
-    ///
-    /// @return an unmodifiable view of the features of this room
+    /**
+     * Gets the features.
+     *
+     * @return an unmodifiable view of the features of this room
+     */
     public Set<String> getFeatures() {
         // only return view, make it unmodifiable
         return Collections.unmodifiableSet(features);
     }
 
     // setters for constructor and command modifying, with input validation
-    /// Sets the room type.
-    ///
-    /// @param type the new type of this room, must not be null
+    /**
+     * Sets the room type.
+     *
+     * @param type the new type of this room, must not be null
+     */
     public void setType(RoomType type) {
         this.roomType = Objects.requireNonNull(type, "type must not be null");
     }
 
-    /// Sets the capacity.
-    ///
-    /// @param capacity the new capacity of this room, must be positive
+    /**
+     * Sets the capacity.
+     *
+     * @param capacity the new capacity of this room, must be positive
+     */
     public void setCapacity(int capacity) {
         if (capacity <= 0) {
             throw new CrobsException.InvalidValueException("capacity must be positive: " + capacity);
@@ -81,9 +95,11 @@ public final class Room {
         this.capacity = capacity;
     }
 
-    /// Replaces all features of the room.
-    ///
-    /// @param features the new features of this room, replacing the existing ones
+    /**
+     * Replaces all features of the room.
+     *
+     * @param features the new features of this room, replacing the existing ones
+     */
     public void setFeatures(Collection<String> features) {
         this.features.clear();
         this.features.addAll(features);
@@ -98,6 +114,11 @@ public final class Room {
             return false;
         }
         return roomId == ((Room) o).getRoomId();
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(roomId);
     }
 
     @Override

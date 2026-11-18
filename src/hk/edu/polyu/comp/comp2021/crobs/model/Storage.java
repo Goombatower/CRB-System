@@ -1,6 +1,4 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
-import java.util.HashMap;
-import java.util.Objects;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -29,9 +27,11 @@ public final class Storage {
     // Users
     // ------------------------------------------------------------------
 
-    /// Creates a new regular user with a newly generated ID.
-    /// @param name the name of the new user
-    /// @return the newly created user
+    /**
+     * Creates a new regular user with a newly generated ID.
+     * @param name the name of the new user
+     * @return the newly created user
+     */
     public User addUser(String name) {
         int userId = IdGenerator.nextUserId();
         User user = new User(userId, name, UserType.REGULAR);
@@ -39,9 +39,11 @@ public final class Storage {
         return user;
     }
 
-    /// Looks up a user by ID.
-    /// @param userId the ID of the user to find
-    /// @return the user with the given ID
+    /**
+     * Looks up a user by ID.
+     * @param userId the ID of the user to find
+     * @return the user with the given ID
+     */
     public User getUser(int userId) {
         User user = users.get(userId);
         if (user == null) {
@@ -50,8 +52,10 @@ public final class Storage {
         return user;
     }
 
-    /// Gets all users.
-    /// @return a list of all users, sorted by user ID in ascending order
+    /**
+     * Gets all users.
+     * @return a list of all users, sorted by user ID in ascending order
+     */
     public List<User> getUsers() {
         List<User> list = new ArrayList<>(users.values());
         // sort by id, ascending order
@@ -59,8 +63,10 @@ public final class Storage {
         return list;
     }
 
-    /// Removes a regular user together with all bookings made by that user.
-    /// @param userId the ID of the user to remove
+    /**
+     * Removes a regular user together with all bookings made by that user.
+     * @param userId the ID of the user to remove
+     */
     public void removeUser(int userId) {
         User user = users.get(userId);
         if (user == null) {
@@ -68,17 +74,19 @@ public final class Storage {
         }
         // only allow removing regular
         if (user.isAdmin()) {
-            throw new CrobsException.NoSuchUserException("can only remove regular user");
+            throw new CrobsException.PermissionDeniedException("can only remove regular user");
         }
         users.remove(userId);
         // remove bookings made by user
         bookings.values().removeIf(booking -> booking.getUserId() == userId);
     }
 
-    /// Changes the type of a user.
-    ///
-    /// @param userId the ID of the user to change
-    /// @param newRole the new type to assign to the user
+    /**
+     * Changes the type of a user.
+     *
+     * @param userId the ID of the user to change
+     * @param newRole the new type to assign to the user
+     */
     public void changeUserType(int userId, UserType newRole) {
         User user = users.get(userId);
         if (user == null) {
@@ -92,12 +100,14 @@ public final class Storage {
     // Rooms
     // ------------------------------------------------------------------
 
-    /// Creates a new room with a newly generated ID.
-    ///
-    /// @param type the type of the new room
-    /// @param capacity the capacity of the new room
-    /// @param features the features of the new room
-    /// @return the newly created room
+    /**
+     * Creates a new room with a newly generated ID.
+     *
+     * @param type the type of the new room
+     * @param capacity the capacity of the new room
+     * @param features the features of the new room
+     * @return the newly created room
+     */
     public Room addRoom(RoomType type, int capacity, Set<String> features) {
         int roomId = IdGenerator.nextRoomId();
         Room room = new Room(roomId, type, capacity, features);
@@ -105,10 +115,12 @@ public final class Storage {
         return room;
     }
 
-    /// Looks up a room by ID.
-    ///
-    /// @param roomId the ID of the room to find
-    /// @return the room with the given ID
+    /**
+     * Looks up a room by ID.
+     *
+     * @param roomId the ID of the room to find
+     * @return the room with the given ID
+     */
     public Room getRoom(int roomId) {
         Room room = rooms.get(roomId);
         if (room == null) {
@@ -117,9 +129,11 @@ public final class Storage {
         return room;
     }
 
-    /// Gets all rooms.
-    ///
-    /// @return a list of all rooms, sorted by room ID in ascending order
+    /**
+     * Gets all rooms.
+     *
+     * @return a list of all rooms, sorted by room ID in ascending order
+     */
     public List<Room> getRooms() {
         List<Room> list = new ArrayList<>(rooms.values());
         // sort by id, ascending order
@@ -127,52 +141,63 @@ public final class Storage {
         return list;
     }
 
-    /// Removes a room together with all bookings of that room.
-    ///
-    /// @param roomId the ID of the room to remove
+    /**
+     * Removes a room together with all future bookings of that room.
+     * Past bookings are kept as history, as required by REQ9.
+     *
+     * @param roomId the ID of the room to remove
+     */
     public void removeRoom(int roomId) {
         Room room = rooms.remove(roomId);
         if (room == null) {
             throw new CrobsException.NoSuchRoomException("no such room: " + roomId);
         }
-        // remove bookings associated with this room
-        bookings.values().removeIf(booking -> booking.getRoomId() == roomId);
+        // only future bookings are cancelled, past bookings are kept
+        LocalDate today = LocalDate.now();
+        bookings.values().removeIf(booking -> booking.getRoomId() == roomId
+                && !booking.getDate().isBefore(today));
     }
 
-    /// Replaces the features of a room.
-    ///
-    /// @param roomId the ID of the room to change
-    /// @param features the new set of features
+    /**
+     * Replaces the features of a room.
+     *
+     * @param roomId the ID of the room to change
+     * @param features the new set of features
+     */
     public void changeRoomFeature(int roomId, Set<String> features) {
         Room room = rooms.get(roomId);
         if (room == null) {
-            throw new CrobsException.NoSuchRoomException("no such user: " + roomId);
+            throw new CrobsException.NoSuchRoomException("no such room: " + roomId);
         }
         room.setFeatures(features);
         rooms.replace(roomId, room);
     }
 
-    /// Changes the type of a room.
-    ///
-    /// @param roomId the ID of the room to change
-    /// @param type the new room type
+    /**
+     * Changes the type of a room.
+     *
+     * @param roomId the ID of the room to change
+     * @param type the new room type
+     */
     public void changeRoomType(int roomId, RoomType type) {
         Room room = rooms.get(roomId);
         if (room == null) {
-            throw new CrobsException.NoSuchRoomException("no such user: " + roomId);
+            throw new CrobsException.NoSuchRoomException("no such room: " + roomId);
         }
         room.setType(type);
         rooms.replace(roomId, room);
     }
 
-    /// Changes the capacity of a room.
-    ///
-    /// @param roomId the ID of the room to change
-    /// @param capacity the new capacity
+    /**
+     * Changes the capacity of a room.
+     *
+     * @param roomId the ID of the room to change
+     * @param capacity the new capacity
+     */
     public void changeRoomCapacity(int roomId, int capacity) {
         Room room = rooms.get(roomId);
         if (room == null) {
-            throw new CrobsException.NoSuchRoomException("no such user: " + roomId);
+            throw new CrobsException.NoSuchRoomException("no such room: " + roomId);
         }
         room.setCapacity(capacity);
         rooms.replace(roomId, room);
@@ -182,8 +207,15 @@ public final class Storage {
 
     // constraint checking helper
     private boolean isAvailable(int roomId, LocalDate date, LocalTime start, LocalTime end) {
+        return isAvailable(roomId, date, start, end, -1);
+    }
+
+    // same check, but ignores one booking (the one being modified)
+    private boolean isAvailable(int roomId, LocalDate date, LocalTime start, LocalTime end,
+                                int ignoredBookingId) {
         for (Booking booking : bookings.values()) {
-            if (booking.getRoomId() == roomId && booking.getDate().equals(date)
+            if (booking.getBookId() != ignoredBookingId
+                    && booking.getRoomId() == roomId && booking.getDate().equals(date)
                     && start.isBefore(booking.getEndTime())
                     && booking.getStartTime().isBefore(end)) {
                 return false;
@@ -211,6 +243,8 @@ public final class Storage {
                 list.add(room);
             }
         }
+        // sort by id, ascending order
+        list.sort(Comparator.comparingInt(Room::getRoomId));
         return list;
     }
 
@@ -243,19 +277,21 @@ public final class Storage {
     // Bookings
     // ------------------------------------------------------------------
 
-    /// Creates a new booking with a newly generated ID, if the room exists and is free.
-    ///
-    /// @param userId the ID of the user making the booking
-    /// @param roomId the ID of the room to book
-    /// @param date the date of the booking
-    /// @param start the start time of the booking (inclusive)
-    /// @param end the end time of the booking (exclusive)
-    /// @param purpose the purpose of the booking
-    /// @return the newly created booking
+    /**
+     * Creates a new booking with a newly generated ID, if the room exists and is free.
+     *
+     * @param userId the ID of the user making the booking
+     * @param roomId the ID of the room to book
+     * @param date the date of the booking
+     * @param start the start time of the booking (inclusive)
+     * @param end the end time of the booking (exclusive)
+     * @param purpose the purpose of the booking
+     * @return the newly created booking
+     */
     public Booking addBooking(int userId, int roomId, LocalDate date,
                               LocalTime start, LocalTime end, String purpose) {
         if (rooms.get(roomId) == null) {
-            throw new CrobsException.NoSuchRoomException("no such user: " + roomId);
+            throw new CrobsException.NoSuchRoomException("no such room: " + roomId);
         }
         if (!isAvailable(roomId, date, start, end)) {
             throw new CrobsException.BookingConflictException("booking conflict");
@@ -266,10 +302,12 @@ public final class Storage {
         return booking;
     }
 
-    /// Looks up a booking by ID.
-    ///
-    /// @param bookingId the ID of the booking to find
-    /// @return the booking with the given ID
+    /**
+     * Looks up a booking by ID.
+     *
+     * @param bookingId the ID of the booking to find
+     * @return the booking with the given ID
+     */
     public Booking getBooking(int bookingId) {
         Booking booking = bookings.get(bookingId);
         if (booking == null) {
@@ -278,10 +316,12 @@ public final class Storage {
         return booking;
     }
 
-    /// Gets all bookings made by a user.
-    ///
-    /// @param userId the ID of the user
-    /// @return the user's bookings, sorted by date and then start time
+    /**
+     * Gets all bookings made by a user.
+     *
+     * @param userId the ID of the user
+     * @return the user's bookings, sorted by date and then start time
+     */
     public List<Booking> getBookingsForUser(int userId) {
         List<Booking> list = new ArrayList<>();
         for (Booking booking : bookings.values()) {
@@ -294,9 +334,11 @@ public final class Storage {
         return list;
     }
 
-    /// Gets all bookings.
-    ///
-    /// @return a list of all bookings, sorted by date and then start time
+    /**
+     * Gets all bookings.
+     *
+     * @return a list of all bookings, sorted by date and then start time
+     */
     public List<Booking> getAllBookings() {
         List<Booking> list = new ArrayList<>(bookings.values());
         // sort by date and time
@@ -304,9 +346,11 @@ public final class Storage {
         return list;
     }
 
-    /// Removes a booking.
-    ///
-    /// @param bookingId the ID of the booking to remove
+    /**
+     * Removes a booking.
+     *
+     * @param bookingId the ID of the booking to remove
+     */
     public void removeBooking(int bookingId) {
         Booking booking = bookings.remove(bookingId);
         if (booking == null) {
@@ -314,37 +358,46 @@ public final class Storage {
         }
     }
 
-    /// Moves a booking to another room.
-    ///
-    /// @param bookingId the ID of the booking to change
-    /// @param roomId the ID of the new room
+    /**
+     * Moves a booking to another room.
+     *
+     * @param bookingId the ID of the booking to change
+     * @param roomId the ID of the new room, must exist and be free at the booking time
+     */
     public void changeBookingRoom(int bookingId, int roomId) {
-        Booking booking = bookings.get(bookingId);
-        if (booking == null) {
-            throw new CrobsException.NoSuchBookingException("no such booking: " + bookingId);
+        Booking booking = getBooking(bookingId);
+        getRoom(roomId);
+        if (!isAvailable(roomId, booking.getDate(), booking.getStartTime(),
+                booking.getEndTime(), bookingId)) {
+            throw new CrobsException.BookingConflictException("booking conflict");
         }
         booking.setRoomId(roomId);
         bookings.replace(bookingId, booking);
     }
 
-    /// Changes the date and time interval of a booking.
-    ///
-    /// @param bookingId the ID of the booking to change
-    /// @param date the new date
-    /// @param start the new start time (inclusive)
-    /// @param end the new end time (exclusive)
+    /**
+     * Changes the date and time interval of a booking.
+     *
+     * @param bookingId the ID of the booking to change
+     * @param date the new date
+     * @param start the new start time (inclusive)
+     * @param end the new end time (exclusive)
+     */
     public void changeBookingTime(int bookingId, LocalDate date, LocalTime start, LocalTime end) {
-        Booking booking = bookings.get(bookingId);
-        if (booking == null) {
-            throw new CrobsException.NoSuchBookingException("no such booking: " + bookingId);
+        Booking booking = getBooking(bookingId);
+        Booking.checkTime(date, start, end);
+        if (!isAvailable(booking.getRoomId(), date, start, end, bookingId)) {
+            throw new CrobsException.BookingConflictException("booking conflict");
         }
         booking.setTime(date, start, end);
         bookings.replace(bookingId, booking);
     }
 
-    /// Changes the purpose of a booking.
-    /// @param bookingId the ID of the booking to change
-    /// @param purpose the new purpose
+    /**
+     * Changes the purpose of a booking.
+     * @param bookingId the ID of the booking to change
+     * @param purpose the new purpose
+     */
     public void changeBookingPurpose(int bookingId, String purpose) {
         Booking booking = bookings.get(bookingId);
         if (booking == null) {
@@ -352,5 +405,29 @@ public final class Storage {
         }
         booking.setPurpose(purpose);
         bookings.replace(bookingId, booking);
+    }
+
+    /**
+     * Updates the room, date, time and purpose of a booking atomically.
+     * Nothing is changed unless every new value is valid and the new slot is free.
+     *
+     * @param bookingId the ID of the booking to change
+     * @param roomId the ID of the new room, must exist
+     * @param date the new date
+     * @param start the new start time (inclusive)
+     * @param end the new end time (exclusive)
+     * @param purpose the new purpose
+     */
+    public void changeBooking(int bookingId, int roomId, LocalDate date,
+                              LocalTime start, LocalTime end, String purpose) {
+        Booking booking = getBooking(bookingId);
+        getRoom(roomId);
+        Booking.checkTime(date, start, end);
+        if (!isAvailable(roomId, date, start, end, bookingId)) {
+            throw new CrobsException.BookingConflictException("booking conflict");
+        }
+        booking.setRoomId(roomId);
+        booking.setTime(date, start, end);
+        booking.setPurpose(purpose);
     }
 }

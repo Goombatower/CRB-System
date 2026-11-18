@@ -10,6 +10,7 @@ import java.time.LocalTime;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -137,7 +138,9 @@ class BookingTest {
                 () -> assertTrue(booking.equals(sameId)),
                 () -> assertFalse(booking.equals(differentId)),
                 () -> assertFalse(booking.equals("not a booking")),
-                () -> assertFalse(booking.equals(null))
+                () -> assertFalse(booking.equals(null)),
+                () -> assertEquals(booking.hashCode(), sameId.hashCode()),
+                () -> assertNotEquals(booking.hashCode(), differentId.hashCode())
         );
     }
 
