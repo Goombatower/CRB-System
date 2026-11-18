@@ -146,7 +146,14 @@ public final class Storage {
 
     // Special searching methods related with Room
 
-    // constraint checking helper
+    /** constraint checking helper
+     *
+     * @param roomId takes in the room ID
+     * @param date takes in the date
+     * @param start takes in the starting time
+     * @param end takes in the ending time
+     * @return returns if it is available or not
+     */
     private boolean isAvailable(int roomId, LocalDate date, LocalTime start, LocalTime end) {
         for (Booking booking : bookings.values()) {
             if (booking.getRoomId() == roomId && booking.getDate().equals(date)
@@ -158,7 +165,13 @@ public final class Storage {
         return true;
     }
 
-    /** Search rooms available for a slot with the required capacity and features. */
+    /** Search rooms available for a slot with the required capacity and features.
+     * @param date takes in the date
+     * @param start takes in the starting time
+     * @param end takes in the ending time
+     * @param minCapacity takes in the minimum capacity you need
+     * @param features takes in the features you want
+     * @return returns available rooms*/
     public List<Room> searchAvailableRooms(LocalDate date, LocalTime start, LocalTime end,
                                            int minCapacity, Set<String> features) {
         List<Room> list = new ArrayList<>();
@@ -171,7 +184,10 @@ public final class Storage {
         return list;
     }
 
-    /** Returns all bookings for a room in the 7-day window starting at {@code weekStart} */
+    /** Returns all bookings for a room in the 7-day window starting at {@code weekStart} 
+     * @param roomId takes in the ID of the room you're searchin
+     * @param weekStart takes the start of the first day of the 7-day period
+     * @return returns list of bookins in the week*/
     public List<Booking> weeklySchedule(int roomId, LocalDate weekStart) {
         LocalDate weekEnd = weekStart.plusDays(7); // Exclusive end for a 7-day window
         List<Booking> list = new ArrayList<>();
