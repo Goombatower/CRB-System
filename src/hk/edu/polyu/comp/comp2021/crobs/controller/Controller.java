@@ -210,12 +210,21 @@ public final class Controller {
         User superAdmin = requireSuperAdmin();
         int id = parseInt(requireArg(c, 0, "changeRole targetUserId newRole"));
         UserType userType = UserType.fromToken(requireArg(c, 1, "changeRole targetUserId newRole"));
+        // The superadmin keeps its own role and may only modify other users.
+        if (id == superAdmin.getUserId()) {
+            throw new CrobsException.PermissionDeniedException(
+                    "superadmin cannot change its own role");
+        }
         store.changeUserType(id, userType);
         return "Changed role of user " + id + " to " + userType;
     }
 
     /** REQ5: login userID. */
     private String login(Command c) {
+        if (session.isLoggedIn()) {
+            throw new CrobsException.PermissionDeniedException(
+                    "already logged in; log out before logging in again");
+        }
         int id = parseInt(requireArg(c, 0, "login userID"));
         User user = store.getUser(id);
         session.setCurrentUser(user);
