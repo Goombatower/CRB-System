@@ -28,7 +28,7 @@ public final class Room {
     }
 
     // standard getters
-    public int getRoomIdId() {
+    public int getRoomId() {
         return roomId;
     }
     public RoomType getRoomType() {
