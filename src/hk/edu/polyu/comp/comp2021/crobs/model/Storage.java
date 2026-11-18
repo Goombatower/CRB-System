@@ -1,4 +1,6 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
+import java.util.HashMap;
+import java.util.Objects;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
