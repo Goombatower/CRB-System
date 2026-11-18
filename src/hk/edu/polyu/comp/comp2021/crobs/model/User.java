@@ -52,7 +52,7 @@ public final class User {
         if (!(o instanceof User)) {
             return false;
         }
-        return userId == ((User) o).userId;
+        return userId == ((User) o).getUserId();
     }
 
     @Override
