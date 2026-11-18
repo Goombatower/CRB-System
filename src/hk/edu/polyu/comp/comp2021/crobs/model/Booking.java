@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * A booking session of a room by a user, on a date within a half-open time interval [startTime, endTime).
  *
- * The booking ID and the owner user ID are immutable.
+ * <p>The booking ID and the owner user ID are immutable.</p>
  * The room, date, times and purpose may change through {@code modifyBooking} command.
  */
 public final class Booking {
@@ -64,8 +64,8 @@ public final class Booking {
         Objects.requireNonNull(startTime, "startTime must not be null");
         Objects.requireNonNull(endTime, "endTime must not be null");
         if (!endTime.isAfter(startTime)) {
-            // throw new CrobsException.InvalidValueException(
-            //       "endTime must be after startTime: " + startTime + "-" + endTime);
+             throw new CrobsException.InvalidValueException(
+                   "endTime must be after startTime: " + startTime + "-" + endTime);
         }
         this.date = date;
         this.startTime = startTime;
@@ -97,10 +97,7 @@ public final class Booking {
         }
         return bookId == ((Booking) o).bookId;
     }
-    @Override
-    public int hashCode() {
-        return Objects.hash(bookId);
-    }
+
     @Override
     public String toString() {
         return "Booking{bookId=" + bookId + ", user=" + userId + ", room=" + roomId

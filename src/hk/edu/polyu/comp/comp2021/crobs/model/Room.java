@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * A room. Every room has a unique roomId, a {@link RoomType}, a capacity and a features.
  *
- * The roomId is immutable.
+ * <p>The roomId is immutable.</p>
  * The RoomType, capacity and features may change through admin's {@code modifyRoom} command.
  */
 public final class Room {
@@ -28,7 +28,7 @@ public final class Room {
     }
 
     // standard getters
-    public int getRoomIdId() {
+    public int getRoomId() {
         return roomId;
     }
     public RoomType getRoomType() {
@@ -48,7 +48,7 @@ public final class Room {
     }
     public void setCapacity(int capacity) {
         if (capacity <= 0) {
-            // throw new CrobsException.InvalidValueException("capacity must be positive: " + capacity);
+            throw new CrobsException.InvalidValueException("capacity must be positive: " + capacity);
         }
         this.capacity = capacity;
     }
@@ -67,13 +67,11 @@ public final class Room {
         }
         return roomId == ((Room) o).roomId;
     }
-    @Override
-    public int hashCode() {
-        return Objects.hash(roomId);
-    }
+
     @Override
     public String toString() {
         return "Room{id=" + roomId + ", type=" + roomType.getTokenType()
-                + ", capacity=" + capacity + ", features=" + features + "}";
+                + ", capacity=" + capacity + ", features="
+                + String.join(",", features) + "}";
     }
 }

@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * A Crobs user. Every user has a unique userId, a name, and a {@link UserType}.
  *
- * The userId and name are immutable.
+ * <p>The userId and name are immutable.</p>
  * The UserType may change through superadmin's {@code changeRole} command.
  */
 public final class User {
@@ -54,10 +54,7 @@ public final class User {
         }
         return userId == ((User) o).userId;
     }
-    @Override
-    public int hashCode() {
-        return Objects.hash(userId);
-    }
+
     @Override
     public String toString() {
         return "User{id=" + userId + ", name='" + name + "', role=" + userType + "}";

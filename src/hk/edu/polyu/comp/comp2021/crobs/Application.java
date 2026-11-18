@@ -25,7 +25,7 @@ public final class Application {
         // utility class, empty by default
     }
 
-    public static void main(String[] args) throws IOException {
+    static void main(String[] args) throws IOException {
         Path htmlPath = null;
         Path txtPath = null;
 
@@ -88,11 +88,20 @@ public final class Application {
         Controller controller = new Controller(store, loggers);
         CommandParser parser = new CommandParser();
 
-        // main loop of MVC
         try (CLIView view = new CLIView(System.in, System.out)) {
             view.println("Crobs - Campus Room Booking System");
-            view.println("The superadmin is user id 1; log in with 'login 1'.");
+            view.println("The superadmin is user id 1, please log in with 'login 1'.");
             view.println("Type 'quit' to exit.");
+
+            // main loop of MVC
+            // in this loop:
+            // view: receives one command
+            // controller: parses the command
+            // logging: log the command here
+            // controller: calls the model to read or update data
+            // model: updates its state and returns data to the controller
+            // controller: passes message or required data to view
+            // view: display the data
             while (!controller.isQuitRequested()) {
                 String line = view.readCommand();
                 // if user manually closed terminal without using quit
