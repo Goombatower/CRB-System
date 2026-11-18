@@ -1,6 +1,6 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
 
-public class IdGenerator {
+public final class IdGenerator {
     private IdGenerator(){}
     static private int roomIdStart = 1;
     static private int userIdStart = 1;
