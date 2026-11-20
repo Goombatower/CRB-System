@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * logs the operations in html
+ * logs the operations in HTML
  */
 public final class HtmlOperationLogger implements OperationLogger {
     private final BufferedWriter writer;

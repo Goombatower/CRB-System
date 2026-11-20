@@ -36,6 +36,9 @@ public final class Session {
     /**
      * sets the current user to null
      */
+
+
+
     public void logout() {
         this.currentUser = null;
     }

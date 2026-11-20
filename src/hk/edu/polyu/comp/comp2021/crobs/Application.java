@@ -6,6 +6,7 @@ import hk.edu.polyu.comp.comp2021.crobs.logging.*;
 import hk.edu.polyu.comp.comp2021.crobs.view.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -58,6 +59,18 @@ public final class Application {
             System.exit(1);
         }
 
+        // check file
+        if (Files.notExists(htmlPath)) {
+            System.err.println("Cannot confirm html file, please create one or correct the path.");
+            printUsage();
+            System.exit(1);
+        }
+        if (Files.notExists(txtPath)) {
+            System.err.println("Cannot confirm txt file, please create one or correct the path.");
+            printUsage();
+            System.exit(1);
+        }
+
         run(htmlPath, txtPath);
     }
 
@@ -73,7 +86,7 @@ public final class Application {
 
     // hint usage
     private static void printUsage() {
-        System.out.println("\"Usage: java hk.edu.polyu.comp.comp2021.crobs.Application -html <log.html> -txt <log.txt>\"");
+        System.out.println("Usage: java hk.edu.polyu.comp.comp2021.crobs.Application -html <log.html> -txt <log.txt>");
     }
 
     // main run function
@@ -95,6 +108,7 @@ public final class Application {
         try (CLIView view = new CLIView(System.in, System.out)) {
             view.println("Crobs - Campus Room Booking System");
             view.println("The superadmin is user id 1, please log in with 'login 1'.");
+            view.println("Type 'help' to check supported commands.");
             view.println("Type 'quit' to exit.");
 
             // main loop of MVC

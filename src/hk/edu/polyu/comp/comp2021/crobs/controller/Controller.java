@@ -144,6 +144,9 @@ public final class Controller {
                 return listBookings(command);
             case "quit":
                 return quit(command);
+            case "help":
+            case "?":
+                return help(command);
             default:
                 throw new CrobsException.InvalidCommandException(
                         "unknown command: " + command.getName());
@@ -417,6 +420,29 @@ public final class Controller {
     private String quit(Command c) {
         quitRequested = true;
         return "Bye";
+    }
+
+    /** help */
+    private String help(Command c) {
+        return
+        "Supported Commands:\n" +
+        "addUser name\n" +
+        "removeUser targetUserID\n" +
+        "changeRole targetUserId newRole\n" +
+        "login userID\n" +
+        "logout\n" +
+        "addRoom roomType capacity features\n" +
+        "modifyRoom roomID field newValue\n" +
+        "deleteRoom roomID\n" +
+        "book roomId date startTime endTime purpose\n" +
+        "modifyBooking bookingID roomId date startTime endTime purpose\n" +
+        "deleteBooking bookingID\n" +
+        "search date startTime endTime minCapacity features\n" +
+        "schedule roomId weekStartDate\n" +
+        "listRoom roomID\n" +
+        "listAllRooms\n" +
+        "listBookings\n" +
+        "quit";
     }
 
     // output formatting
